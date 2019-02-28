@@ -1,0 +1,2 @@
+W_WIDTH = 600
+W_HEIGHT = 600
