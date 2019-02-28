@@ -5,6 +5,11 @@ from config import W_HEIGHT, W_WIDTH
 
 
 class VoronoiGame:
+    """An implementation of the Voronoi Game in a simple polygon, where
+       each player may place 1 facility. (Although this can be easily changed).
+       A user is said to be served by a facility it it is the closest facility
+       to that user. The player who serves the most users wins.
+    """
 
     def __init__(self, player1, player2, polygon=None, users=None):
         self.player1 = player1
@@ -12,9 +17,12 @@ class VoronoiGame:
         self.p1_play, self.p2_play = None, None
         self.polygon = polygon or []
         self.users = users or []
+
         assert(len(self.polygon) > 2 and len(self.users) > 0
                and all(geometry.poly_contains(self.polygon, user)
                        for user in self.users))
+
+        self.polygon = geometry.unknot_polygon(self.polygon)
         self._step = 0
         self._action_handler = [self.player1_turn,
                                 self.player2_turn,
@@ -22,7 +30,8 @@ class VoronoiGame:
                                 ]
 
         pg.init()
-        self.screen = pg.display.set_mode((W_WIDTH, W_HEIGHT))
+        self.width, self.height = W_WIDTH, W_HEIGHT
+        self.screen = pg.display.set_mode((self.width, self.height))
         pg.display.set_caption('The Incredible Voronoi Game')
 
         # Fill board
@@ -34,6 +43,8 @@ class VoronoiGame:
         self.running = False
 
     def show(self):
+        """Refreshes the display.
+        """
         self.screen.fill(BG_COLOR)
         pg.draw.polygon(self.screen, POLY_COLOR, self.polygon, 3)
         for user in self.users:
@@ -45,6 +56,8 @@ class VoronoiGame:
         pg.display.flip()
 
     def run(self):
+        """Launches the game, and executes every step.
+        """
         # TODO: polygon and users placement through GUI
         self.running = True
         while self.running:
@@ -52,9 +65,14 @@ class VoronoiGame:
             self.request_action()
 
     def is_valid_play(self, point):
+        """Checks if point is a valid play, i.e. if it lies inside of the
+           polygon.
+        """
         return geometry.poly_contains(self.polygon, point)
 
     def player_turn(self, player):
+        """Requires a player to play, until it outputs a valid point.
+        """
         point = player.play(self)
         while not self.is_valid_play(point):
             point = player.play(self)
@@ -67,11 +85,17 @@ class VoronoiGame:
         self.p2_play = self.player_turn(self.player2)
 
     def request_action(self):
+        """Executes a step of the game and prepares for the next.
+           If it was the last, signals it.
+        """
         self._action_handler[self._step]()
         self._step += 1
         self.running = self._step < len(self._action_handler)
+        return self.running
 
     def compute_scores(self):
+        """Computes the score for both players.
+        """
         score_p1 = 0
         score_p2 = 0
         for user in self.users:
@@ -81,14 +105,20 @@ class VoronoiGame:
                 score_p1 += 1
             elif dist2 < dist1:
                 score_p2 += 1
-        print("Player 1's score: ", score_p1, "\nPlayer 2's score: ", score_p2)
         return score_p1, score_p2
 
+    # Unused for now
     def reset(self):
+        """Erases players' plays and goes back to the first step.
+        """
+
+        self._step = 0
         self.p1_play = None
         self.p2_play = None
 
     def end(self):
+        """Closes pygame and ends the program.
+        """
         pg.display.quit()
         pg.quit()
         exit(0)
