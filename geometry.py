@@ -3,9 +3,6 @@ This module contains various functions for geometry purposes (computing
 lines intersections, distances,...) that are used mainly by the game.
 """
 
-import math
-
-
 
 def or_det(p1, p2, q):
     return (p2[0] - p1[0]) * (q[1] - p1[1]) - (p2[1] - p1[1]) * (q[0] - p1[0])
@@ -15,7 +12,7 @@ def unknot_polygon(poly):
     knotted = True
     while knotted:
         knotted = False
-        for i in range(-1, len(poly - 1):
+        for i in range(-1, len(poly - 1)):
             for j in range(i + 1, len(poly) - 1):
                 if segments_intersection(poly[i], poly[i+1],
                                          poly[j], poly[j+1]):
@@ -67,7 +64,7 @@ def sort_points(points):
         for j in range(1, len(points) - i):
             side = or_det(points[0], points[j], points[j+1])
             if side > 0 or side == 0 \
-             and rect_contains(points[0], points[j], points[j+1]):
+              and rect_contains(points[0], points[j], points[j+1]):
                 points[j], points[j+1] = points[j+1], points[j]
                 moved = True
         if not moved:
