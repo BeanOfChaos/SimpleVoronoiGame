@@ -12,7 +12,7 @@ def unknot_polygon(poly):
     knotted = True
     while knotted:
         knotted = False
-        for i in range(-1, len(poly - 1)):
+        for i in range(-1, len(poly) - 1):
             for j in range(i + 1, len(poly) - 1):
                 if segments_intersection(poly[i], poly[i+1],
                                          poly[j], poly[j+1]):
