@@ -8,6 +8,23 @@ def or_det(p1, p2, q):
     return (p2[0] - p1[0]) * (q[1] - p1[1]) - (p2[1] - p1[1]) * (q[0] - p1[0])
 
 
+def is_on(point, p, q):
+    """Checks if point is strictly on the line segment defined by p and q.
+    """
+    p_point = eucl_dist(p, point)
+    p_q = eucl_dist(p, q)
+    point_q = eucl_dist(point, q)
+    return p_point + point_q == p_q
+
+
+def is_strictly_on(point, p, q):
+    """Checks if point is strictly on the line segment defined by p and q.
+    """
+    p_point = eucl_dist(p, point)
+    point_q = eucl_dist(point, q)
+    return p_point and point_q and p_point + point_q == eucl_dist(p, q)
+
+
 def unknot_polygon(poly):
     knotted = True
     while knotted:
@@ -96,14 +113,20 @@ def eucl_dist(p1, p2):
     return (p1[0] - p2[0])**2 + (p1[1] - p2[1])**2
 
 
-def perpendicular(line, point):
-    a = - 1 / line[0]
-    b = point[1] - a * point[0]
-    return (a, b)
-
-
-def med(p1, p2):
-    return perpendicular(line_through(p1, p2), middle(p1, p2))
+def halfline_seg_intersection(p1, q1, p2, q2):
+    """Compute the intersection of the halfline defined by p1 and q1
+       (extended through q1), and the segment defined by p2, q2
+    """
+    l1 = line_through(p1, q1)
+    l2 = line_through(p2, q2)
+    inter = lines_intersection(l1, l2)
+    p_i = eucl_dist(p1, inter)
+    p_q = eucl_dist(p1, q1)
+    q_i = eucl_dist(q1, inter)
+    if q_i < p_i or p_i + q_i == p_q:
+        return inter
+    else:
+        return None
 
 
 def lines_intersection(l1, l2):
@@ -127,13 +150,10 @@ def line_seg_intersection(l, p, q):
         return None
 
 
-def halfline_seg_intersection(p, q):
-    pass
-
-
 def segments_intersection(p1, q1, p2, q2):
     sides1 = or_det(p1, q1, p2) * or_det(p1, q1, q2)
     sides2 = or_det(p2, q2, p1) * or_det(p2, q2, q1)
+    # 'sides' will be negative only if points lie on opposite sides
     if sides1 < 0 and sides2 < 0:
         l1 = line_through(p1, q1)
         l2 = line_through(p2, q2)
@@ -141,17 +161,50 @@ def segments_intersection(p1, q1, p2, q2):
     return None
 
 
-def visibility_region(facility, polygon):
-    V = []
-    for point in polygon:
-        vertex = point
-        for i in range(-1, len(polygon) - 1):
-            inter = segments_intersection(facility, vertex,
-                                          polygon[i], polygon[i+1])
-            if inter is not None:
-                r = eucl_dist(facility, vertex)
-                s = eucl_dist(facility, inter)
-                if r > s:
-                    vertex = inter
-        V.append(vertex)
-    return sort_points(V)
+def split_polygon(poly, p, q):
+    """Splits a polygon in two by drawing an edge betwween two boundary points.
+       Return a list containing the lists of both subpolygons vertices,
+       or None if either of the points were not on the polygon boundary.
+       Runs in O(n) time, where n is |V_polygon|.
+    """
+    extending = False
+    pok, qok = False, False
+    subpoly = [[], []]
+    for i in range(-1, len(poly) - 1):
+        subpoly[extending].append(poly[i])
+        if is_on(p, poly[i], poly[i+1]):
+            pok = True
+            if p != poly[i]:
+                subpoly[extending].append(p)
+            else:
+                subpoly[not extending].append(p)
+            extending = not extending
+
+        elif is_on(q, poly[i], poly[i+1]):
+            qok = True
+            if q != poly[i]:
+                subpoly[extending].append(q)
+            else:
+                subpoly[not extending].append(q)
+            extending = not extending
+    return subpoly if pok and qok else None
+
+
+def nonvisibility_regions(facility, polygon):
+    regions = []
+    for vertex in polygon:
+        found = True
+        for j in range(-1, len(polygon) - 1):
+            inter = halfline_seg_intersection(facility, vertex)
+            found = not is_on(inter, facility, vertex)
+            if not found:
+                break
+        if found:
+            anchor = vertex
+            visible_region, other_region = split_polygon(polygon, vertex, inter)
+            if not poly_contains(visible_region, facility):
+                visible_region, other_region = other_region, visible_region
+            regions.append((anchor, other_region))
+            regions.extend(nonvisibility_regions(facility, visible_region))
+        break
+    return regions
