@@ -1,2 +1,2 @@
 # SimpleVoronoiGame
-An implementation of simple Voronoi Game, and strategies
+An implementation of simple Voronoi Game, and bots using various strategies.
