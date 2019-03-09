@@ -104,7 +104,7 @@ def line_through(p1, p2):
     """
     if p1[0] == p2[0]:
         return None
-    a = abs(p1[1] - p2[2]) / abs(p1[0] - p2[0])
+    a = abs(p1[1] - p2[1]) / abs(p1[0] - p2[0])
     b = p1[1] - p1[0] * a
     return (a, b)
 
