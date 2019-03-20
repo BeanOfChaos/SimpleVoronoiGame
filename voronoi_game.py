@@ -17,7 +17,8 @@ class VoronoiGame:
         self.p1_play, self.p2_play = None, None
         self.polygon = polygon or []
         self.users = users or []
-
+        self.p1_score = None
+        self.p2_score = None
         assert(len(self.polygon) > 2 and len(self.users) > 0
                and all(geometry.poly_contains(self.polygon, user)
                        for user in self.users))
@@ -26,7 +27,9 @@ class VoronoiGame:
         self._step = 0
         self._action_handler = [self.player1_turn,
                                 self.player2_turn,
-                                self.compute_scores
+                                self.store_scores,
+                                self.wait,
+                                self.end
                                 ]
 
         pg.init()
@@ -42,6 +45,10 @@ class VoronoiGame:
         self.screen.blit(self.board, (0, 0))
         self.running = False
 
+    def wait(self):
+        self.show()
+        input()
+
     def show(self):
         """Refreshes the display.
         """
@@ -50,9 +57,11 @@ class VoronoiGame:
         for user in self.users:
             pg.draw.circle(self.screen, USERS_COLOR, user, 3)
         if self.p1_play is not None:
-            pg.draw.circle(self.screen, P1_COLOR, self.p1_play, 3)
+            pg.draw.circle(self.screen, P1_COLOR,
+                           (int(self.p1_play[0]), int(self.p1_play[1])), 3)
         if self.p2_play is not None:
-            pg.draw.circle(self.screen, P2_COLOR, self.p2_play, 3)
+            pg.draw.circle(self.screen, P2_COLOR,
+                           (int(self.p2_play[0]), int(self.p2_play[1])), 3)
         pg.display.flip()
 
     def run(self):
@@ -93,25 +102,37 @@ class VoronoiGame:
         self.running = self._step < len(self._action_handler)
         return self.running
 
-    def compute_scores(self):
+    def compute_scores(self, p1_play, p2_play):
         """Computes the score for both players.
         """
         score_p1 = 0
         score_p2 = 0
         for user in self.users:
-            dist1 = geometry.distance_in_poly(self.p1_play, user, self.polygon)
-            dist2 = geometry.distance_in_poly(self.p2_play, user, self.polygon)
+            dist1 = geometry.distance_in_poly(p1_play, user, self.polygon)
+            dist2 = geometry.distance_in_poly(p2_play, user, self.polygon)
             if dist1 < dist2:
                 score_p1 += 1
             elif dist2 < dist1:
                 score_p2 += 1
-        return score_p1, score_p2
+
+        return (score_p1, score_p2)
+
+    def store_scores(self):
+        self.p1_score, self.p2_score = self.compute_scores(self.p1_play,
+                                                           self.p2_play)
+        print("Player 1's score: ", self.p1_score)
+        print("Player 2's score: ", self.p2_score)
+        if self.p1_score > self.p2_score:
+            print("Player 1 wins!")
+        elif self.p1_score < self.p2_score:
+            print("Player 2 wins!")
+        else:
+            print("Tie!")
 
     # Unused for now
     def reset(self):
         """Erases players' plays and goes back to the first step.
         """
-
         self._step = 0
         self.p1_play = None
         self.p2_play = None
