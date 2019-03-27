@@ -50,26 +50,25 @@ class OptimalBot(Player):
 
     def optimal_p2(self, p1_play, polygon, users):
         regions = geo.nonvisibility_regions(p1_play, polygon)
-        anchors = set()
+        anchors = []
         for user in users:
             found = False
             for anchor, region in regions:
                 if geo.poly_contains(region, user):
-                    anchors.add(anchor)
+                    anchors.append(anchor)
                     found = True
                     break
             if not found:
-                anchors.add(user)
-        anchors = list(anchors)
-        line, side = geo.maximizing_half_plane(p1_play, anchors)
-        a = line[0]
-        pert1 = geo.normalize((side, side * a))
-        way = side * a / abs(a)
-        pert2 = geo.normalize((way, - way / a))
-        perturb = ((pert1[0] + pert2[0]),
-                   (pert1[1] + pert2[1]))
-
-        return (p1_play[0] + perturb[0], p1_play[1] + perturb[1])
+                anchors.append(user)
+        point, _, anchors = geo.maximizing_half_plane(p1_play, anchors)
+        pert = geo.normalize((point[0] - p1_play[0], point[1] - p1_play[1]))
+        for anchor in anchors:
+            vec = geo.normalize((anchor[0] - p1_play[0],
+                                 anchor[1] - p1_play[1]))
+            pert = (pert[0] + vec[0], pert[1] + vec[1])
+        pert = geo.normalize(pert)
+        # pert = (round(pert[0]), round(pert[1]))
+        return (p1_play[0] + 2 * pert[0], p1_play[1] + 2 * pert[1])
 
     def play(self, game):
         if game.p1_play is not None:

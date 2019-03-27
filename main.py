@@ -8,7 +8,6 @@ from random import randint
 
 
 def random_polygon(n_vertices):
-    print(n_vertices)
     poly = [(randint(0, W_WIDTH), randint(0, W_HEIGHT))
             for i in range(n_vertices)]
     poly = geo.unknot_polygon(poly)
@@ -26,8 +25,7 @@ def random_users(n_users, poly):
 
 
 if __name__ == '__main__':
-    polygon = random_polygon(randint(4, 5))
+    polygon = random_polygon(randint(10, 15))
     users = random_users(10, polygon)
     game = VoronoiGame(OptimalBot(), OptimalBot(),
                        polygon=polygon, users=users)
-    game.run()

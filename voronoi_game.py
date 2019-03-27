@@ -28,8 +28,7 @@ class VoronoiGame:
         self._action_handler = [self.player1_turn,
                                 self.player2_turn,
                                 self.store_scores,
-                                self.wait,
-                                self.end
+                                self.wait
                                 ]
 
         pg.init()
@@ -88,10 +87,14 @@ class VoronoiGame:
         return point
 
     def player1_turn(self):
+        print("P1, computing")
         self.p1_play = self.player_turn(self.player1)
+        print("P1, played")
 
     def player2_turn(self):
+        print("P2, computing")
         self.p2_play = self.player_turn(self.player2)
+        print("P2, played")
 
     def request_action(self):
         """Executes a step of the game and prepares for the next.

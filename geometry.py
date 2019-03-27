@@ -17,8 +17,8 @@ def dot_product(p1, p2, q):
 
 def normalize(vector):
     unit = abs(max(vector, key=abs))
-    return (round(vector[0]/unit),
-            round(vector[1]/unit))
+    return (vector[0]/unit,
+            vector[1]/unit)
 
 
 def maximizing_half_plane(f, points):
@@ -26,17 +26,16 @@ def maximizing_half_plane(f, points):
        contains a maximum number of points. Second return element indicates
        whether the halfplane is underneath the line.
     """
-    counter = [0 for point in points]
+    counter = [[] for point in points]
     for i, p1 in enumerate(points[:-1]):
         for j, p2 in enumerate(points[i+1:]):
             od = dot_product(p1, f, p2)
             if od > 0:
-                counter[i] += 1
+                counter[i].append(p2)
             elif od < 0:
-                counter[j+i+1] += 1
-    point = points[max(enumerate(counter), key=lambda x: x[1])[0]]
-    return (line_through(f, point),
-            -1 if f[0] > point[0] else 1)
+                counter[j+i+1].append(p2)
+    index, count = max(enumerate(counter), key=lambda x: len(x[1]))
+    return (points[index], f, count)
 
 
 def contains_full(p1, p2, poly):
@@ -70,8 +69,8 @@ def unknot_polygon(poly):
             for j in range(i + 1, len(poly) - 1):
                 if segments_intersection(poly[i], poly[i+1],
                                          poly[j], poly[j+1]):
-                    knotted = True
                     shuffle(poly)
+                    knotted = True
     return poly
 
 
@@ -98,9 +97,9 @@ def distance_in_poly(p1, p2, poly):
     for region in regions:
         if poly_contains(region[1], p2):
             found = True
-            anchor = region[0]
+            anchor, reg = region
             break
-    return (eucl_dist(p1, anchor) + distance_in_poly(anchor, p2) if found \
+    return (eucl_dist(p1, anchor) + distance_in_poly(anchor, p2, reg) if found
             else eucl_dist(p1, p2))
 
 
@@ -127,12 +126,12 @@ def halfline_seg_intersection(p1, q1, p2, q2):
     l1 = line_through(p1, q1)
     l2 = line_through(p2, q2)
     inter = lines_intersection(l1, l2)
-    p_i = eucl_dist(p1, inter)
-    q_i = eucl_dist(q1, inter)
-    if is_on(inter, p2, q2) and (q_i < p_i or is_on(inter, p1, q1)):
-        return inter
-    else:
-        return None
+    if inter:
+        p_i = eucl_dist(p1, inter)
+        q_i = eucl_dist(q1, inter)
+        if is_on(inter, p2, q2) and (q_i < p_i or is_on(inter, p1, q1)):
+            return inter
+    return None
 
 
 def lines_intersection(l1, l2):
@@ -173,18 +172,10 @@ def split_polygon(poly, p, q):
        Return a list containing the lists of both subpolygons vertices.
        Runs in O(n) time, where n is |V_polygon|.
     """
-    def is_on_bis(point, p, q):
-        """Checks if point is on the line segment defined by p and q.
-        """
-        line = line_through(p, q)
-        xeq = line[0] * point[0] + line[1]
-        print("Difference in ys: ", float(xeq - point[1]))
-        return(is_on(point, p, q))
     extending = False
     pok, qok = False, False
     subpoly = [[], []]
     for i in range(-1, len(poly) - 1):
-        print(i)
         if not pok and is_on(p, poly[i], poly[i+1]):
             if p != poly[i+1]:
                 pok = True
@@ -203,13 +194,7 @@ def split_polygon(poly, p, q):
                 subpoly[extending].append(q)
         else:
             subpoly[extending].append(poly[i])
-    print()
-    try:
-        assert qok and pok, "Points were not on the polygon boundary!"
-    except AssertionError:
-        print("FATAL ERROR")
-        input()
-        exit(0)
+    assert qok and pok, "Points were not on the polygon boundary!"
     return subpoly
 
 
