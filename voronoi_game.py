@@ -28,7 +28,8 @@ class VoronoiGame:
         self._action_handler = [self.player1_turn,
                                 self.player2_turn,
                                 self.store_scores,
-                                self.wait
+                                self.wait,
+                                self.end
                                 ]
 
         pg.init()
@@ -145,4 +146,3 @@ class VoronoiGame:
         """
         pg.display.quit()
         pg.quit()
-        exit(0)

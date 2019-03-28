@@ -202,16 +202,19 @@ def nonvisibility_regions(facility, polygon):
     regions = []
     for i in range(-1, len(polygon) - 1):
         for j in range(-1, len(polygon) - 1):
-            inter = halfline_seg_intersection(facility, polygon[i],
-                                              polygon[j], polygon[j+1])
-            if not inter or is_on(inter, facility, polygon[i]):
-                break
-            elif contains_full(facility, inter, polygon):
-                anchor = polygon[i]
-                polygon, hidden = split_polygon(polygon, anchor, inter)
-                if not poly_contains(polygon, facility):
-                    polygon, hidden = hidden, polygon
-                regions.append((anchor, hidden))
-                regions.extend(nonvisibility_regions(facility, polygon))
-                return regions
+            if j != i and j+1 != i:
+                inter = halfline_seg_intersection(facility, polygon[i],
+                                                  polygon[j], polygon[j+1])
+                if not inter:
+                    continue
+                elif is_on(inter, facility, polygon[i]):
+                    break
+                elif contains_full(facility, inter, polygon):
+                    anchor = polygon[i]
+                    polygon, hidden = split_polygon(polygon, anchor, inter)
+                    if not poly_contains(polygon, facility):
+                        polygon, hidden = hidden, polygon
+                    regions.append((anchor, hidden))
+                    regions.extend(nonvisibility_regions(facility, polygon))
+                    return regions
     return regions
